@@ -9,3 +9,6 @@ venv
 *log*
 *sh
 src/
+user-password.py
+user-config.py
+config/application.config.ini

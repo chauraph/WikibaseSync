@@ -26,12 +26,6 @@ class WikibaseImporter:
         self.id = IdSparql(endpoint, self.identifier.itemIdentifier, self.identifier.propertyIdentifier)
         self.id.load()
     
-        print("#import P2888 exact match")
-        wikidata_property = pywikibot.PropertyPage(wikidata_repo, "P2888")
-        wikidata_property.get()
-        exactMatch_property = self.change_property(wikidata_property, wikibase_repo, False)
-        self.identifier.setExactMatchIdentifier(exactMatch_property)
-
     # transforms the json to an item
     def json_to_item(self, wikibase_repo, json_object):
         y = json.loads(json_object)
@@ -270,15 +264,10 @@ class WikibaseImporter:
         myDescriptions = self.diff_descriptions(wikidata_item, wikibase_item)
         myaliases = self.diff_aliases(wikidata_item, wikibase_item)
         # mySitelinks = diffSiteLinks(wikidata_item, wikibase_item)
-        mySitelinks = [];
+        mySitelinks = []
         claim = pywikibot.page.Claim(self.wikibase_repo, self.identifier.itemIdentifier, datatype='external-id')
         target = wikidata_item.getID()
         claim.setTarget(target)
-
-        #make exact match
-        claim2 = pywikibot.page.Claim(self.wikibase_repo, self.identifier.exactMatchIdentifier, datatype='url')
-        target = "http://www.wikidata.org/entity/" + wikidata_item.getID()
-        claim2.setTarget(target)
 
         data = {
             'labels': mylabels,
@@ -287,7 +276,7 @@ class WikibaseImporter:
             'sitelinks': mySitelinks,
             'claims': [claim.toJSON(),claim2.toJSON()]
         }
-        print(data["claims"])
+
         try:
             wikibase_item.editEntity(data, summary=u'Importing entity ' + wikidata_item.getID() + ' from wikidata')
             self.id.save_id(wikidata_item.getID(), wikibase_item.getID())
@@ -311,18 +300,12 @@ class WikibaseImporter:
         claim = pywikibot.page.Claim(self.wikibase_repo, self.identifier.propertyIdentifier, datatype='external-id')
         target = wikidata_item.getID()
         claim.setTarget(target)
-    
-        #make exact match
-        if wikidata_item.getID() != "P2888": 
-            claim2 = pywikibot.page.Claim(self.wikibase_repo, self.identifier.exactMatchIdentifier, datatype='url')
-            target = "http://www.wikidata.org/entity/" + wikidata_item.getID()
-            claim2.setTarget(target)
 
         data = {
             'labels': mylabels,
             'descriptions': myDescriptions,
             'aliases': myaliases,
-            'claims': [claim.toJSON(),claim2.toJSON()] if wikidata_item.getID() != "P2888" else [claim.toJSON()]
+            'claims': [claim.toJSON()]
         }
         try:
             wikibase_item.editEntity(data,
@@ -1197,25 +1180,6 @@ class WikibaseImporter:
         if statements:
             self.change_site_links(wikidata_item, wikibase_item)
             self.change_claims(wikidata_item, wikibase_item)
-
-
-        #make exact match
-        claim = pywikibot.page.Claim(wikibase_repo, self.identifier.exactMatchIdentifier, datatype='url')
-        target = "http://www.wikidata.org/entity/" + wikidata_item.getID()
-        claim.setTarget(target)
-        data = {
-            'claims': [claim.toJSON()]
-        }
-        found_existing_claim = False
-        for wikibase_claims in wikibase_item.claims:
-            for wikibase_c in wikibase_item.claims.get(wikibase_claims):
-                wikibase_claim = wikibase_c.toJSON()
-                if (self.identifier.exactMatchIdentifier == wikibase_claim.get('mainsnak').get('property')) and (target == wikibase_claim.get('mainsnak').get('datavalue').get('value')):
-                    found_existing_claim = True
-        if not found_existing_claim:
-            wikibase_item.editEntity(data, summary=u'Importing entity ' + wikidata_item.getID() + ' from wikidata')
-                    
-
         return wikibase_item
 
     def change_item_given_id(self, wikidata_item, id, wikibase_repo, statements):
@@ -1249,26 +1213,6 @@ class WikibaseImporter:
             self.change_descriptions(wikidata_item, wikibase_item)
         if statements:
             self.change_claims(wikidata_item, wikibase_item)
-
-
-        #make exact match
-        if wikidata_item.getID() != "P2888": 
-            claim = pywikibot.page.Claim(wikibase_repo, self.identifier.exactMatchIdentifier, datatype='url')
-            target = "http://www.wikidata.org/entity/" + wikidata_item.getID()
-            claim.setTarget(target)
-            data = {
-                'claims': [claim.toJSON()]
-            }
-            
-            found_existing_claim = False
-            for wikibase_claims in wikibase_item.claims:
-                for wikibase_c in wikibase_item.claims.get(wikibase_claims):
-                    wikibase_claim = wikibase_c.toJSON()
-                    if (self.identifier.exactMatchIdentifier == wikibase_claim.get('mainsnak').get('property')) and (target == wikibase_claim.get('mainsnak').get('datavalue').get('value')):
-                        found_existing_claim = True
-            if not found_existing_claim:
-                wikibase_item.editEntity(data, summary=u'Importing entity ' + wikidata_item.getID() + ' from wikidata')
-
         return wikibase_item
 
 
