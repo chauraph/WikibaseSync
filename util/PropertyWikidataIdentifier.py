@@ -17,10 +17,6 @@ class PropertyWikidataIdentifier:
     def __init__(self):
         self.itemIdentifier = None
         self.propertyIdentifier = None
-        self.exactMatchIdentifier = None
-
-    def setExactMatchIdentifier(self, wikibase_item):
-        self.exactMatchIdentifier = wikibase_item.getID()
 
     def get(self, wikibase_repo):
         if len(wiki_item_exists(wikibase_repo, "Wikidata QID"))>0:
